@@ -4,7 +4,6 @@ const FormData = require("form-data");
 
 let zeissIdToken = null;
 
-// Acquire token
 async function acquireZeissIdAccessToken(email, password) {
   const res = await axios.get(
     "https://id-ip-stage.zeiss.com/.well-known/openid-configuration?p=B2C_1A_ZeissIdRopcSignIn"
@@ -33,10 +32,15 @@ module.exports = async (req, res) => {
     );
   }
 
+  const path = req.query.path || ""; // forward requested path
+
   const proxy = createProxyMiddleware({
     target: process.env.TARGET_URL,
     changeOrigin: true,
     secure: false,
+    pathRewrite: {
+      "^/api/proxy": `/${path}`, // rewrite so backend sees /token
+    },
     onProxyReq: (proxyReq) => {
       proxyReq.setHeader("Authorization", `Bearer ${zeissIdToken}`);
     },
